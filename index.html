@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ohsou.com - SEO Fix Timeline</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F2EFE8;
+    --border: #E0DDD5;
+    --text: #1A1A18;
+    --muted: #7A7870;
+    --faint: #B0ADA5;
+    --red: #C0392B;
+    --red-bg: #FDF0EE;
+    --amber: #B7650A;
+    --amber-bg: #FEF6E8;
+    --green: #2D7A4F;
+    --green-bg: #EEF7F2;
+    --purple: #5B4FCF;
+    --purple-bg: #F0EEFC;
+    --teal: #1A6B5A;
+    --teal-bg: #EAF4F1;
+    --accent: #1A1A18;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--text); color: #F7F5F0; padding: 2.5rem 3rem 2rem; }
+  header .brand { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #A0A09A; margin-bottom: 10px; text-transform: uppercase; }
+  header h1 { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 6px; }
+  header p { font-size: 14px; color: #A0A09A; font-weight: 300; }
+
+  /* CONTROLS BAR */
+  .controls-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 3rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+  .ctrl-group { display: flex; align-items: center; gap: 8px; }
+  .ctrl-group label { font-size: 12px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .ctrl-group input[type=date] { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); cursor: pointer; }
+  .ctrl-group input[type=date]:focus { outline: 2px solid var(--text); outline-offset: 1px; }
+  .divider-v { width: 1px; height: 24px; background: var(--border); }
+  .filter-btns { display: flex; gap: 4px; }
+  .filter-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; background: transparent; cursor: pointer; color: var(--muted); transition: all 0.15s; white-space: nowrap; }
+  .filter-btn:hover, .filter-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn-export { margin-left: auto; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 18px; border: 1px solid var(--text); border-radius: 6px; background: var(--text); color: var(--bg); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+  .btn-export:hover { background: #333; }
+  .btn-export svg { width: 14px; height: 14px; }
+  .btn-ghost { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .sync-status { font-size: 12px; color: var(--faint); white-space: nowrap; }
+  .add-task-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 3rem; max-height: 0; overflow: hidden; transition: max-height 0.25s ease, padding-top 0.25s ease, padding-bottom 0.25s ease; }
+  .add-task-panel.open { max-height: 240px; padding-top: 0.9rem; padding-bottom: 0.9rem; }
+  .add-task-form { display: grid; grid-template-columns: 160px 1.4fr 1.4fr 110px 120px 140px auto; gap: 8px; align-items: end; }
+  .add-task-form .field { display: flex; flex-direction: column; gap: 5px; }
+  .add-task-form label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .add-task-form input, .add-task-form select { height: 34px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+  .add-task-form input:focus, .add-task-form select:focus { outline: 2px solid var(--text); outline-offset: 1px; border-color: transparent; }
+  .btn-add { height: 34px; border: 1px solid var(--text); border-radius: 6px; background: var(--text); color: var(--bg); padding: 0 14px; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .btn-add:hover { background: #333; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .stat { background: var(--surface); padding: 1.25rem 2rem; }
+  .stat-label { font-size: 11px; font-weight: 500; color: var(--faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 500; line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* MAIN CONTENT */
+  .main { padding: 2rem 3rem 4rem; }
+
+  /* PHASE */
+  .phase { margin-bottom: 2.5rem; }
+  .phase-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 1rem; padding-bottom: 10px; border-bottom: 2px solid var(--text); }
+  .phase-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--faint); }
+  .phase-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 500; }
+  .phase-meta { font-size: 12px; color: var(--muted); margin-left: auto; }
+  .phase-bar { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; margin-bottom: 2px; }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface2); }
+  th { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr.hidden-row { display: none; }
+
+  .issue-name { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 3px; }
+  .issue-url { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--faint); line-height: 1.4; }
+  .date-suggested { font-size: 11px; color: var(--faint); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+
+  input.date-field { font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--text); width: 140px; cursor: pointer; }
+  input.date-field:focus { outline: 2px solid var(--text); outline-offset: 1px; border-color: transparent; }
+  input.owner-field { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--text); width: 130px; }
+  input.owner-field:focus { outline: 2px solid var(--text); outline-offset: 1px; border-color: transparent; }
+  input.owner-field::placeholder { color: var(--faint); }
+
+  .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; cursor: pointer; transition: all 0.15s; user-select: none; white-space: nowrap; }
+  .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .s-todo { background: var(--red-bg); color: var(--red); }
+  .s-todo .dot { background: var(--red); }
+  .s-prog { background: var(--amber-bg); color: var(--amber); }
+  .s-prog .dot { background: var(--amber); }
+  .s-done { background: var(--green-bg); color: var(--green); }
+  .s-done .dot { background: var(--green); }
+
+  .effort-pill { display: inline-block; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 4px; white-space: nowrap; }
+  .eff-low { background: var(--green-bg); color: var(--green); }
+  .eff-med { background: var(--amber-bg); color: var(--amber); }
+  .eff-high { background: var(--red-bg); color: var(--red); }
+
+  .notes-field { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--text); width: 100%; min-width: 120px; resize: none; height: 34px; overflow: hidden; }
+  .notes-field:focus { outline: 2px solid var(--text); outline-offset: 1px; border-color: transparent; height: auto; min-height: 60px; }
+  .notes-field::placeholder { color: var(--faint); }
+  .btn-del { font-size: 11px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--muted); padding: 5px 9px; cursor: pointer; }
+  .btn-del:hover:not([disabled]) { border-color: var(--red); color: var(--red); }
+  .btn-del[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+  /* PROGRESS STRIP */
+  .progress-strip { height: 4px; background: var(--border); margin-bottom: 0; }
+  .progress-fill { height: 100%; background: var(--text); transition: width 0.4s ease; border-radius: 0 2px 2px 0; }
+
+  /* FOOTER */
+  footer { background: var(--surface2); border-top: 1px solid var(--border); padding: 1.5rem 3rem; display: flex; align-items: center; justify-content: space-between; }
+  footer p { font-size: 12px; color: var(--faint); }
+  .save-note { font-size: 12px; color: var(--green); display: none; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--text); color: var(--bg); font-size: 13px; padding: 10px 18px; border-radius: 8px; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; z-index: 999; font-family: 'DM Sans', sans-serif; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    header, .controls-bar, .add-task-panel, .main, footer { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    th:nth-child(6), td:nth-child(6) { display: none; }
+    input.owner-field { width: 100px; }
+    .add-task-form { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    th:nth-child(5), td:nth-child(5) { display: none; }
+    .filter-btns { display: none; }
+    th:nth-child(7), td:nth-child(7) { display: none; }
+    .add-task-panel.open { max-height: 520px; }
+    .add-task-form { grid-template-columns: 1fr; }
+  }
+
+  .col-issue { width: 26%; }
+  .col-due { width: 16%; }
+  .col-owner { width: 14%; }
+  .col-status { width: 12%; }
+  .col-effort { width: 10%; }
+  .col-notes { width: 18%; }
+  .col-actions { width: 4%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">ohsou.com - SEO Audit 2026</div>
+  <h1>Fix Timeline Tracker</h1>
+  <p>14 issues across 4 phases - Click status badges to cycle - All data saved in browser</p>
+</header>
+
+<div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="controls-bar">
+  <div class="ctrl-group">
+    <label>Start date</label>
+    <input type="date" id="startDate" value="2026-04-14">
+  </div>
+  <div class="divider-v"></div>
+  <div class="filter-btns">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('Not started',this)">Not started</button>
+    <button class="filter-btn" onclick="setFilter('In progress',this)">In progress</button>
+    <button class="filter-btn" onclick="setFilter('Done',this)">Done</button>
+  </div>
+  <button class="btn-export" onclick="exportCSV()">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg>
+    Export CSV
+  </button>
+  <button class="btn-ghost" onclick="exportSyncFile()">Export Sync File</button>
+  <button class="btn-ghost" onclick="triggerImportSync()">Import Sync File</button>
+  <button class="btn-ghost" onclick="toggleAddTaskPanel()">Add Task</button>
+  <button class="btn-ghost" onclick="setupLiveSync()">Connect Live Sync</button>
+  <button class="btn-ghost" onclick="pullFromCloud()">Pull Cloud</button>
+  <button class="btn-ghost" onclick="pushToCloud()">Push Cloud</button>
+  <span class="sync-status" id="liveSyncStatus">Live sync: Off</span>
+  <input id="syncFileInput" type="file" accept="application/json" style="display:none">
+</div>
+
+<div class="add-task-panel" id="addTaskPanel">
+  <form class="add-task-form" id="addTaskForm">
+    <div class="field">
+      <label for="taskPhase">Phase</label>
+      <select id="taskPhase"></select>
+    </div>
+    <div class="field">
+      <label for="taskName">Task name</label>
+      <input id="taskName" type="text" placeholder="Add a new SEO task" required>
+    </div>
+    <div class="field">
+      <label for="taskUrl">URL / page</label>
+      <input id="taskUrl" type="text" placeholder="ohsou.com/...">
+    </div>
+    <div class="field">
+      <label for="taskEffort">Effort</label>
+      <select id="taskEffort">
+        <option value="low">Low</option>
+        <option value="med" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="taskEffortLabel">Effort label</label>
+      <input id="taskEffortLabel" type="text" placeholder="2 hrs">
+    </div>
+    <div class="field">
+      <label for="taskDay">Day number</label>
+      <input id="taskDay" type="number" min="1" value="21">
+    </div>
+    <button class="btn-add" type="submit">Add Task</button>
+  </form>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-label">Total issues</div><div class="stat-value" id="s-total">14</div><div class="stat-sub" id="s-total-sub">across 4 phases</div></div>
+  <div class="stat"><div class="stat-label">Not started</div><div class="stat-value" id="s-todo" style="color:var(--red)">14</div><div class="stat-sub">to be assigned</div></div>
+  <div class="stat"><div class="stat-label">In progress</div><div class="stat-value" id="s-prog" style="color:var(--amber)">0</div><div class="stat-sub">being worked on</div></div>
+  <div class="stat"><div class="stat-label">Done</div><div class="stat-value" id="s-done" style="color:var(--green)">0</div><div class="stat-sub">completed</div></div>
+  <div class="stat"><div class="stat-label">Progress</div><div class="stat-value" id="s-pct" style="color:var(--purple)">0%</div><div class="stat-sub">of all issues</div></div>
+</div>
+
+<div class="main" id="main"></div>
+
+<footer>
+  <p>ohsou.com SEO Timeline - Built from full-site audit - April 2026</p>
+  <span class="save-note" id="saveNote">Changes saved</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const STORAGE_KEY = 'ohsou_seo_timeline_v2';
+
+const PHASES = [
+  {
+    id:'p1', num:'Phase 01', color:'#C0392B',
+    title:'Critical fixes',
+    meta:'Week 1 - Days 1-7 - Fix immediately',
+    issues:[
+      {id:'f1', name:'Fix broken footer links', url:'ohsou.com/ - theme footer snippet', effort:'low', effortLabel:'30 min', days:1},
+      {id:'f2', name:'Rename /pages/copy-of-our-story + set up 301 redirect', url:'ohsou.com/pages/copy-of-our-story', effort:'low', effortLabel:'15 min', days:2},
+      {id:'f3', name:'Fix truncated homepage title tag', url:'ohsou.com/', effort:'low', effortLabel:'10 min', days:2},
+      {id:'f4', name:'Remove CTA stuffing from all FAQ page templates', url:'ohsou.com/pages/*-faqs (all 6 pages)', effort:'med', effortLabel:'2 hrs', days:5},
+    ]
+  },
+  {
+    id:'p2', num:'Phase 02', color:'#B7650A',
+    title:'Schema & structured data',
+    meta:'Week 2 - Days 8-14 - Needs developer',
+    issues:[
+      {id:'s1', name:'Add Product + AggregateRating schema to all product pages', url:'ohsou.com/products/*', effort:'med', effortLabel:'4 hrs', days:9},
+      {id:'s2', name:'Add FAQPage schema to all 6 FAQ pages', url:'ohsou.com/pages/*-faqs', effort:'med', effortLabel:'2 hrs', days:11},
+      {id:'s3', name:'Add BreadcrumbList schema to product + collection pages', url:'ohsou.com/collections/* and /products/*', effort:'med', effortLabel:'2 hrs', days:12},
+      {id:'s4', name:'Add Organization + WebSite schema to homepage', url:'ohsou.com/', effort:'low', effortLabel:'1 hr', days:13},
+    ]
+  },
+  {
+    id:'p3', num:'Phase 03', color:'#5B4FCF',
+    title:'On-page content & URLs',
+    meta:'Weeks 3-4 - Days 15-28 - Content + dev',
+    issues:[
+      {id:'c1', name:'Write unique title + meta description for each collection page', url:'ohsou.com/collections/* (7 pages)', effort:'med', effortLabel:'3 hrs', days:16},
+      {id:'c2', name:'Add canonical tags to filter-variant collection URLs', url:'Collections with +param filter URLs', effort:'med', effortLabel:'2 hrs', days:18},
+      {id:'c3', name:'Fix /pages/contact-1 URL slug + redirect', url:'ohsou.com/pages/contact-1', effort:'low', effortLabel:'15 min', days:19},
+      {id:'c4', name:'Resolve MamaEase nursing bra page architecture', url:'/pages/mamaease-* vs /collections/nursing-bra', effort:'med', effortLabel:'1 hr', days:22},
+    ]
+  },
+  {
+    id:'p4', num:'Phase 04', color:'#1A6B5A',
+    title:'Strategic projects',
+    meta:'Q2 - Days 29-90 - Plan carefully',
+    issues:[
+      {id:'q1', name:'Write unique intro copy for every collection page', url:'All ohsou.com/collections/*', effort:'high', effortLabel:'1 day', days:35},
+      {id:'q2', name:'Add author bio page for blog authors (E-E-A-T)', url:'blog.ohsou.com - author pages', effort:'med', effortLabel:'2 hrs', days:45},
+      {id:'q3', name:'Migrate blog from blog.ohsou.com -> ohsou.com/blog', url:'blog.ohsou.com (entire subdomain)', effort:'high', effortLabel:'1-2 weeks', days:60},
+    ]
+  }
+];
+
+const STATUS_CYCLE = ['Not started','In progress','Done'];
+const STATUS_CLASS = {'Not started':'s-todo','In progress':'s-prog','Done':'s-done'};
+const EFF_CLASS = {'low':'eff-low','med':'eff-med','high':'eff-high'};
+
+let state = { issues: {}, startDate: '2026-04-14', customTasks: [] };
+let currentFilter = 'all';
+let saveTimer = null;
+let supabaseClient = null;
+let syncChannel = null;
+let isApplyingRemoteState = false;
+let remoteSyncTimer = null;
+let liveSyncConfig = {
+  projectUrl: '',
+  anonKey: '',
+  workspaceId: 'ohsou-main'
+};
+
+function getTotalIssues(){
+  return PHASES.reduce((sum, phase) => sum + phase.issues.length, 0);
+}
+
+function hydrateCustomTasks(){
+  PHASES.forEach(phase => {
+    phase.issues = phase.issues.filter(issue => !issue.custom);
+  });
+  if (!Array.isArray(state.customTasks)) return;
+  state.customTasks.forEach(task => {
+    const phase = PHASES.find(p => p.id === task.phaseId);
+    if (!phase) return;
+    phase.issues.push({
+      id: task.id,
+      name: task.name,
+      url: task.url || 'Custom task',
+      effort: task.effort || 'med',
+      effortLabel: task.effortLabel || 'TBD',
+      days: Number(task.days) || 1,
+      custom: true
+    });
+  });
+}
+
+function normalizeState(candidate){
+  const normalized = {
+    issues: candidate && candidate.issues && typeof candidate.issues === 'object' ? candidate.issues : {},
+    startDate: candidate && candidate.startDate ? candidate.startDate : '2026-04-14',
+    customTasks: candidate && Array.isArray(candidate.customTasks) ? candidate.customTasks : []
+  };
+  state = normalized;
+  hydrateCustomTasks();
+  PHASES.forEach(p => p.issues.forEach(i => {
+    if(!state.issues[i.id]) state.issues[i.id] = {status:'Not started', owner:'', dueDate:'', notes:''};
+  }));
+}
+
+async function fetchLiveSyncConfig(){
+  try {
+    const res = await fetch('/api/sync-config', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Config endpoint failed');
+    const cfg = await res.json();
+    if (!cfg || !cfg.projectUrl || !cfg.anonKey) return false;
+    liveSyncConfig.projectUrl = String(cfg.projectUrl || '').trim();
+    liveSyncConfig.anonKey = String(cfg.anonKey || '').trim();
+    liveSyncConfig.workspaceId = String(cfg.workspaceId || 'ohsou-main').trim() || 'ohsou-main';
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function setLiveSyncStatus(text, isConnected){
+  const statusEl = document.getElementById('liveSyncStatus');
+  if (!statusEl) return;
+  statusEl.textContent = text;
+  statusEl.style.color = isConnected ? 'var(--green)' : 'var(--faint)';
+}
+
+async function subscribeToCloudChanges(){
+  if (!supabaseClient) return;
+  if (syncChannel) {
+    await supabaseClient.removeChannel(syncChannel);
+    syncChannel = null;
+  }
+  syncChannel = supabaseClient
+    .channel('tracker-sync-' + liveSyncConfig.workspaceId)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'tracker_state',
+        filter: `id=eq.${liveSyncConfig.workspaceId}`
+      },
+      (payload) => {
+        const incoming = payload && payload.new ? payload.new.data : null;
+        if (!incoming || isApplyingRemoteState) return;
+        applyRemoteState(incoming);
+      }
+    )
+    .subscribe();
+}
+
+async function applyRemoteState(remote){
+  if (!remote || typeof remote !== 'object') return;
+  isApplyingRemoteState = true;
+  normalizeState(remote);
+  saveState(false, true);
+  document.getElementById('startDate').value = state.startDate;
+  render();
+  showToast('Live update received');
+  isApplyingRemoteState = false;
+}
+
+async function setupLiveSync(){
+  if (!liveSyncConfig.projectUrl || !liveSyncConfig.anonKey || !liveSyncConfig.workspaceId) {
+    const hasConfig = await fetchLiveSyncConfig();
+    if (!hasConfig) {
+      setLiveSyncStatus('Live sync: Missing .env config', false);
+      showToast('Missing backend sync config');
+      return;
+    }
+  }
+
+  if (!liveSyncConfig.projectUrl || !liveSyncConfig.anonKey || !liveSyncConfig.workspaceId) {
+    setLiveSyncStatus('Live sync: Missing .env config', false);
+    showToast('Missing backend sync config');
+    return;
+  }
+
+  if (!window.supabase || !window.supabase.createClient) {
+    showToast('Supabase SDK failed to load');
+    return;
+  }
+
+  try {
+    supabaseClient = window.supabase.createClient(liveSyncConfig.projectUrl, liveSyncConfig.anonKey);
+    setLiveSyncStatus('Live sync: Connecting...', false);
+    await subscribeToCloudChanges();
+    await pullFromCloud(false);
+    setLiveSyncStatus('Live sync: On (' + liveSyncConfig.workspaceId + ')', true);
+    showToast('Live sync connected');
+  } catch (e) {
+    setLiveSyncStatus('Live sync: Error', false);
+    showToast('Live sync setup failed');
+  }
+}
+
+function queueRemoteSync(){
+  if (!supabaseClient || isApplyingRemoteState) return;
+  clearTimeout(remoteSyncTimer);
+  remoteSyncTimer = setTimeout(() => {
+    pushToCloud(false);
+  }, 400);
+}
+
+async function pushToCloud(showMessage = true){
+  if (!supabaseClient) {
+    if (showMessage) showToast('Connect live sync first');
+    return;
+  }
+  try {
+    const payload = {
+      id: liveSyncConfig.workspaceId,
+      data: state,
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await supabaseClient.from('tracker_state').upsert(payload, { onConflict: 'id' });
+    if (error) throw error;
+    if (showMessage) showToast('Pushed to cloud');
+  } catch (e) {
+    if (showMessage) showToast('Push failed. Create tracker_state table first.');
+  }
+}
+
+async function pullFromCloud(showMessage = true){
+  if (!supabaseClient) {
+    if (showMessage) showToast('Connect live sync first');
+    return;
+  }
+  try {
+    const { data, error } = await supabaseClient
+      .from('tracker_state')
+      .select('data')
+      .eq('id', liveSyncConfig.workspaceId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    if (data && data.data) {
+      await applyRemoteState(data.data);
+      if (showMessage) showToast('Pulled latest from cloud');
+    } else {
+      await pushToCloud(false);
+      if (showMessage) showToast('Cloud initialized with local data');
+    }
+  } catch (e) {
+    if (showMessage) showToast('Pull failed. Check sync setup/table.');
+  }
+}
+
+function migrateLegacyState(){
+  try {
+    const legacy = localStorage.getItem('ohsou_seo_timeline');
+    if (!legacy) return;
+    const parsed = JSON.parse(legacy);
+    if (parsed && typeof parsed === 'object' && !parsed.issues) {
+      state.issues = parsed;
+    }
+  } catch (e) {
+    // Ignore corrupt legacy storage.
+  }
+}
+
+function loadState(){
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        normalizeState(parsed);
+      }
+    } else {
+      migrateLegacyState();
+    }
+  } catch(e) {
+    // Keep defaults if storage is unavailable/corrupt.
+  }
+
+  normalizeState(state);
+}
+
+function saveState(showSavedNote = true, skipRemoteSync = false){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (!showSavedNote) return;
+    const el = document.getElementById('saveNote');
+    el.style.display = 'inline';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.style.display='none', 1500);
+  } catch(e) {
+    showToast('Unable to save in this browser context');
+  }
+  if (!skipRemoteSync) queueRemoteSync();
+}
+
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => saveState(), 250);
+}
+
+function getStart(){
+  const v = document.getElementById('startDate').value;
+  return v ? new Date(v+'T00:00:00') : new Date('2026-04-14T00:00:00');
+}
+
+function addDays(base, n){
+  const d = new Date(base);
+  d.setDate(d.getDate() + n - 1);
+  return d.toISOString().split('T')[0];
+}
+
+function fmtDate(ds){
+  if(!ds) return '';
+  const d = new Date(ds+'T00:00:00');
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function updateStats(){
+  let todo=0, prog=0, done=0;
+  const total = getTotalIssues();
+  PHASES.forEach(p => p.issues.forEach(i => {
+    const s = state.issues[i.id].status;
+    if(s==='Not started') todo++;
+    else if(s==='In progress') prog++;
+    else done++;
+  }));
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-total-sub').textContent = 'across ' + PHASES.length + ' phases';
+  document.getElementById('s-todo').textContent = todo;
+  document.getElementById('s-prog').textContent = prog;
+  document.getElementById('s-done').textContent = done;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('s-pct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function cycleStatus(id){
+  const cur = state.issues[id].status;
+  const idx = STATUS_CYCLE.indexOf(cur);
+  state.issues[id].status = STATUS_CYCLE[(idx+1)%3];
+  saveState();
+  updateStats();
+  applyFilter();
+  const badge = document.querySelector(`[data-badge="${id}"]`);
+  if(badge) renderBadge(badge, id);
+}
+
+function renderBadge(el, id){
+  const s = state.issues[id].status;
+  el.className = 'status-badge ' + STATUS_CLASS[s];
+  el.innerHTML = `<span class="dot"></span>${s}`;
+}
+
+function setFilter(f, btn){
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function applyFilter(){
+  document.querySelectorAll('tr[data-issue-id]').forEach(row => {
+    const id = row.dataset.issueId;
+    const match = currentFilter === 'all' || state.issues[id].status === currentFilter;
+    row.classList.toggle('hidden-row', !match);
+  });
+}
+
+function toggleAddTaskPanel(){
+  const panel = document.getElementById('addTaskPanel');
+  panel.classList.toggle('open');
+}
+
+function initAddTaskForm(){
+  const phaseSelect = document.getElementById('taskPhase');
+  phaseSelect.innerHTML = '';
+  PHASES.forEach(phase => {
+    const opt = document.createElement('option');
+    opt.value = phase.id;
+    opt.textContent = phase.num + ' - ' + phase.title;
+    phaseSelect.appendChild(opt);
+  });
+}
+
+function addTaskFromForm(){
+  const phaseId = document.getElementById('taskPhase').value;
+  const phase = PHASES.find(p => p.id === phaseId);
+  if (!phase) {
+    showToast('Invalid phase selection');
+    return;
+  }
+
+  const name = (document.getElementById('taskName').value || '').trim();
+  if (!name) {
+    showToast('Task name is required');
+    return;
+  }
+
+  const url = (document.getElementById('taskUrl').value || '').trim();
+  const effortRaw = (document.getElementById('taskEffort').value || 'med').toLowerCase();
+  const effort = ['low', 'med', 'high'].includes(effortRaw) ? effortRaw : 'med';
+  const effortLabel = (document.getElementById('taskEffortLabel').value || '').trim() || (effort === 'low' ? '30 min' : effort === 'high' ? '1 day' : '2 hrs');
+  const dayRaw = Number(document.getElementById('taskDay').value || 1);
+  const days = Number.isFinite(dayRaw) && dayRaw > 0 ? Math.round(dayRaw) : 1;
+
+  const taskId = 'x' + Date.now();
+  const customTask = {
+    id: taskId,
+    phaseId: phase.id,
+    name,
+    url,
+    effort,
+    effortLabel,
+    days
+  };
+
+  state.customTasks.push(customTask);
+  phase.issues.push({ ...customTask, custom: true });
+  state.issues[taskId] = {status:'Not started', owner:'', dueDate:'', notes:''};
+  saveState();
+  render();
+
+  document.getElementById('taskName').value = '';
+  document.getElementById('taskUrl').value = '';
+  document.getElementById('taskEffort').value = 'med';
+  document.getElementById('taskEffortLabel').value = '';
+  document.getElementById('taskDay').value = String(days + 1);
+
+  showToast('Task added');
+}
+
+function deleteTask(issueId){
+  const foundCustom = state.customTasks.find(t => t.id === issueId);
+  if (!foundCustom) {
+    showToast('Only custom tasks can be deleted');
+    return;
+  }
+  if (!confirm('Delete this custom task? This cannot be undone.')) return;
+
+  state.customTasks = state.customTasks.filter(t => t.id !== issueId);
+  delete state.issues[issueId];
+  hydrateCustomTasks();
+  saveState();
+  render();
+  showToast('Task deleted');
+}
+
+function render(){
+  const start = getStart();
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  PHASES.forEach(phase => {
+    const phaseDiv = document.createElement('div');
+    phaseDiv.className = 'phase';
+    phaseDiv.innerHTML = `
+      <div class="phase-header">
+        <div class="phase-bar" style="background:${phase.color}"></div>
+        <span class="phase-num">${phase.num}</span>
+        <span class="phase-title">${phase.title}</span>
+        <span class="phase-meta">${phase.meta}</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th class="col-issue">Issue</th>
+            <th class="col-due">Due date</th>
+            <th class="col-owner">Owner</th>
+            <th class="col-status">Status</th>
+            <th class="col-effort">Effort</th>
+            <th class="col-notes">Notes</th>
+            <th class="col-actions">Action</th>
+          </tr></thead>
+          <tbody id="tbody-${phase.id}"></tbody>
+        </table>
+      </div>`;
+    main.appendChild(phaseDiv);
+
+    const tbody = phaseDiv.querySelector(`#tbody-${phase.id}`);
+    phase.issues.forEach(issue => {
+      const suggested = addDays(start, issue.days);
+      const d = state.issues[issue.id];
+      const tr = document.createElement('tr');
+      tr.dataset.issueId = issue.id;
+      tr.innerHTML = `
+        <td>
+          <div class="issue-name">${issue.name}</div>
+          <div class="issue-url">${issue.url}</div>
+        </td>
+        <td>
+          <div class="date-suggested">Suggested: ${fmtDate(suggested)}</div>
+          <input class="date-field" type="date" value="${d.dueDate || suggested}" data-id="${issue.id}" data-field="dueDate">
+        </td>
+        <td><input class="owner-field" type="text" placeholder="Add owner" value="${d.owner || ''}" data-id="${issue.id}" data-field="owner"></td>
+        <td><span class="status-badge ${STATUS_CLASS[d.status]}" data-badge="${issue.id}" onclick="cycleStatus('${issue.id}')"><span class="dot"></span>${d.status}</span></td>
+        <td><span class="effort-pill ${EFF_CLASS[issue.effort]}">${issue.effortLabel}</span></td>
+        <td><textarea class="notes-field" placeholder="Add notes..." data-id="${issue.id}" data-field="notes">${d.notes || ''}</textarea></td>
+        <td><button class="btn-del" type="button" onclick="deleteTask('${issue.id}')" ${issue.custom ? '' : 'disabled'}>${issue.custom ? 'Delete' : 'Locked'}</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+
+  main.querySelectorAll('input[data-field], textarea[data-field]').forEach(el => {
+    el.addEventListener('change', e => {
+      state.issues[e.target.dataset.id][e.target.dataset.field] = e.target.value;
+      saveState();
+    });
+    el.addEventListener('input', e => {
+      state.issues[e.target.dataset.id][e.target.dataset.field] = e.target.value;
+      queueSave();
+    });
+    el.addEventListener('blur', () => saveState());
+  });
+
+  applyFilter();
+  updateStats();
+}
+
+function exportCSV(){
+  const start = getStart();
+  const rows = [['Phase','Issue','URL / Page','Effort','Suggested Due','Assigned Due','Owner','Status','Notes']];
+  PHASES.forEach(phase => {
+    phase.issues.forEach(issue => {
+      const d = state.issues[issue.id];
+      const suggested = addDays(start, issue.days);
+      rows.push([
+        phase.title,
+        issue.name,
+        issue.url,
+        issue.effortLabel,
+        fmtDate(suggested),
+        fmtDate(d.dueDate || suggested),
+        d.owner || '',
+        d.status,
+        (d.notes || '').replace(/\n/g,' ')
+      ]);
+    });
+  });
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'ohsou_seo_timeline.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('CSV downloaded');
+}
+
+function exportSyncFile(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ohsou_seo_timeline_sync.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Sync file exported');
+}
+
+function triggerImportSync(){
+  document.getElementById('syncFileInput').click();
+}
+
+function importSyncFile(file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const importedState = parsed && parsed.state ? parsed.state : parsed;
+      if (!importedState || typeof importedState !== 'object') throw new Error('Invalid sync content');
+      normalizeState(importedState);
+      saveState();
+      document.getElementById('startDate').value = state.startDate;
+      render();
+      showToast('Sync imported');
+    } catch (err) {
+      showToast('Invalid sync file');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+document.getElementById('startDate').addEventListener('change', (e) => {
+  state.startDate = e.target.value || '2026-04-14';
+  saveState();
+  render();
+});
+
+document.getElementById('syncFileInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  importSyncFile(file);
+  e.target.value = '';
+});
+
+document.getElementById('addTaskForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  addTaskFromForm();
+});
+
+window.addEventListener('beforeunload', () => {
+  saveState(false);
+});
+
+loadState();
+initAddTaskForm();
+document.getElementById('startDate').value = state.startDate || '2026-04-14';
+render();
+
+setLiveSyncStatus('Live sync: Checking config...', false);
+fetchLiveSyncConfig().then((ok) => {
+  if (ok) {
+    setupLiveSync();
+  } else {
+    setLiveSyncStatus('Live sync: Missing .env config', false);
+  }
+});
+</script>
+</body>
+</html>

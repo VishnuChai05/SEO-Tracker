@@ -1,0 +1,16 @@
+{
+  "name": "seo-tracker-live-sync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SEO tracker with Supabase live sync via env-backed server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "dev:vercel": "vercel dev"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
