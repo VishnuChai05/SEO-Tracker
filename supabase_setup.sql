@@ -4,6 +4,19 @@ create table if not exists public.tracker_state (
   updated_at timestamptz not null default now()
 );
 
+alter table public.tracker_state replica identity full;
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.tracker_state;
+  exception
+    when duplicate_object then
+      null;
+  end;
+end
+$$;
+
 alter table public.tracker_state enable row level security;
 
 drop policy if exists "Allow anon read tracker_state" on public.tracker_state;

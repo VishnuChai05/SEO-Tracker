@@ -187,8 +187,6 @@
   <button class="btn-ghost" onclick="triggerImportSync()">Import Sync File</button>
   <button class="btn-ghost" onclick="toggleAddTaskPanel()">Add Task</button>
   <button class="btn-ghost" onclick="setupLiveSync()">Connect Live Sync</button>
-  <button class="btn-ghost" onclick="pullFromCloud()">Pull Cloud</button>
-  <button class="btn-ghost" onclick="pushToCloud()">Push Cloud</button>
   <span class="sync-status" id="liveSyncStatus">Live sync: Off</span>
   <input id="syncFileInput" type="file" accept="application/json" style="display:none">
 </div>
@@ -305,6 +303,9 @@ let supabaseClient = null;
 let syncChannel = null;
 let isApplyingRemoteState = false;
 let remoteSyncTimer = null;
+let autoPullTimer = null;
+let syncEventsBound = false;
+let lastRemoteUpdatedAt = '';
 let liveSyncConfig = {
   projectUrl: '',
   anonKey: '',
@@ -388,22 +389,54 @@ async function subscribeToCloudChanges(){
       },
       (payload) => {
         const incoming = payload && payload.new ? payload.new.data : null;
+        const remoteTs = payload && payload.new ? String(payload.new.updated_at || '') : '';
         if (!incoming || isApplyingRemoteState) return;
-        applyRemoteState(incoming);
+        applyRemoteState(incoming, remoteTs, false);
       }
     )
     .subscribe();
 }
 
-async function applyRemoteState(remote){
+async function applyRemoteState(remote, remoteUpdatedAt = '', showToastMessage = false){
   if (!remote || typeof remote !== 'object') return;
   isApplyingRemoteState = true;
+  if (remoteUpdatedAt) lastRemoteUpdatedAt = remoteUpdatedAt;
   normalizeState(remote);
   saveState(false, true);
   document.getElementById('startDate').value = state.startDate;
   render();
-  showToast('Live update received');
+  if (showToastMessage) showToast('Live update received');
   isApplyingRemoteState = false;
+}
+
+function bindAutoSyncEvents(){
+  if (syncEventsBound) return;
+  syncEventsBound = true;
+
+  document.addEventListener('visibilitychange', () => {
+    if (!supabaseClient) return;
+    if (document.visibilityState === 'visible') {
+      pullFromCloud({ showMessage: false, silent: true });
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    if (!supabaseClient) return;
+    pullFromCloud({ showMessage: false, silent: true });
+  });
+
+  window.addEventListener('online', () => {
+    if (!supabaseClient) return;
+    pullFromCloud({ showMessage: false, silent: true });
+  });
+}
+
+function startAutoPullLoop(){
+  if (autoPullTimer) clearInterval(autoPullTimer);
+  autoPullTimer = setInterval(() => {
+    if (!supabaseClient) return;
+    pullFromCloud({ showMessage: false, silent: true });
+  }, 5000);
 }
 
 async function setupLiveSync(){
@@ -431,8 +464,10 @@ async function setupLiveSync(){
     supabaseClient = window.supabase.createClient(liveSyncConfig.projectUrl, liveSyncConfig.anonKey);
     setLiveSyncStatus('Live sync: Connecting...', false);
     await subscribeToCloudChanges();
-    await pullFromCloud(false);
-    setLiveSyncStatus('Live sync: On (' + liveSyncConfig.workspaceId + ')', true);
+    await pullFromCloud({ showMessage: false, silent: true });
+    bindAutoSyncEvents();
+    startAutoPullLoop();
+    setLiveSyncStatus('Live sync: Auto On (' + liveSyncConfig.workspaceId + ')', true);
     showToast('Live sync connected');
   } catch (e) {
     setLiveSyncStatus('Live sync: Error', false);
@@ -461,13 +496,16 @@ async function pushToCloud(showMessage = true){
     };
     const { error } = await supabaseClient.from('tracker_state').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
+    lastRemoteUpdatedAt = payload.updated_at;
     if (showMessage) showToast('Pushed to cloud');
   } catch (e) {
     if (showMessage) showToast('Push failed. Create tracker_state table first.');
   }
 }
 
-async function pullFromCloud(showMessage = true){
+async function pullFromCloud(options = {}){
+  const showMessage = Object.prototype.hasOwnProperty.call(options, 'showMessage') ? options.showMessage : true;
+  const silent = Object.prototype.hasOwnProperty.call(options, 'silent') ? options.silent : false;
   if (!supabaseClient) {
     if (showMessage) showToast('Connect live sync first');
     return;
@@ -475,20 +513,23 @@ async function pullFromCloud(showMessage = true){
   try {
     const { data, error } = await supabaseClient
       .from('tracker_state')
-      .select('data')
+      .select('data, updated_at')
       .eq('id', liveSyncConfig.workspaceId)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
     if (data && data.data) {
-      await applyRemoteState(data.data);
-      if (showMessage) showToast('Pulled latest from cloud');
+      const remoteTs = String(data.updated_at || '');
+      if (!remoteTs || remoteTs !== lastRemoteUpdatedAt) {
+        await applyRemoteState(data.data, remoteTs, false);
+      }
+      if (showMessage && !silent) showToast('Pulled latest from cloud');
     } else {
       await pushToCloud(false);
-      if (showMessage) showToast('Cloud initialized with local data');
+      if (showMessage && !silent) showToast('Cloud initialized with local data');
     }
   } catch (e) {
-    if (showMessage) showToast('Pull failed. Check sync setup/table.');
+    if (showMessage && !silent) showToast('Pull failed. Check sync setup/table.');
   }
 }
 
