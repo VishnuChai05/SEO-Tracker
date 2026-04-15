@@ -107,6 +107,9 @@
   .personal-add input { flex: 1; height: 34px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; background: var(--bg); }
   .personal-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
   .personal-item { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+  .personal-item[draggable="true"] { cursor: grab; }
+  .personal-item.dragging { opacity: 0.55; cursor: grabbing; }
+  .personal-item.drop-hint { border-style: dashed; }
   .personal-item.done .personal-text { color: var(--faint); text-decoration: line-through; }
   .p-note { width: 100%; min-height: 120px; border: 1px solid var(--border); border-radius: 6px; padding: 8px; resize: vertical; background: var(--bg); color: var(--text); }
   .p-focus { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-bottom: 10px; background: var(--bg); color: var(--text); }
@@ -123,7 +126,6 @@
   .health-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; }
   .health-item { display: flex; flex-direction: column; gap: 6px; }
   .health-btn { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.15s; }
-  .health-btn:hover { border-color: var(--action-bg); color: var(--action-bg); }
   .health-input { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 12px; background: var(--bg); color: var(--text); }
   .health-input:focus { outline: 2px solid var(--text); outline-offset: 1px; border-color: transparent; }
   .goals-form { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -138,6 +140,33 @@
   .meal-chip input { cursor: pointer; }
   .meal-chip input:checked + * { font-weight: 500; }
   .personal-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; padding: 2rem 3rem 4rem; }
+  .calendar-panel { grid-column: 1 / -1; }
+  .calendar-toolbar { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .calendar-month { font-family: 'Playfair Display', serif; font-size: 20px; line-height: 1; }
+  .calendar-add { display: grid; grid-template-columns: 1.8fr 150px auto; gap: 8px; margin-bottom: 10px; }
+  .calendar-add input { height: 34px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; background: var(--bg); color: var(--text); }
+  .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 8px; }
+  .calendar-weekday { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.08em; text-align: center; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .cal-day { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); min-height: 132px; display: flex; flex-direction: column; }
+  .cal-day.outside-month { opacity: 0.5; }
+  .cal-day.today { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+  .cal-day-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 7px; border-bottom: 1px dashed var(--border); }
+  .cal-day-num { font-size: 12px; font-weight: 500; }
+  .cal-add-day { border: 1px solid var(--border); border-radius: 5px; background: transparent; color: var(--muted); width: 22px; height: 22px; cursor: pointer; line-height: 1; }
+  .cal-add-day:hover { color: var(--text); border-color: var(--text); }
+  .cal-holder { padding: 6px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .cal-holder.over { background: var(--surface2); }
+  .cal-empty { font-size: 11px; color: var(--faint); text-align: center; margin-top: 6px; }
+  .cal-card { border: 1px solid var(--border); border-left: 4px solid var(--teal); border-radius: 6px; background: var(--surface); padding: 6px; cursor: grab; }
+  .cal-card.dragging { opacity: 0.5; cursor: grabbing; }
+  .cal-card.done { border-left-color: var(--green); background: var(--green-bg); }
+  .cal-card-top { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: start; }
+  .cal-card-text { font-size: 12px; line-height: 1.35; word-break: break-word; }
+  .cal-card-actions { display: flex; gap: 5px; align-items: center; }
+  .cal-mini-btn { border: 1px solid var(--border); border-radius: 5px; background: transparent; color: var(--muted); width: 22px; height: 22px; cursor: pointer; line-height: 1; }
+  .cal-mini-btn:hover { border-color: var(--red); color: var(--red); }
+  .calendar-help { font-size: 11px; color: var(--muted); margin-top: 8px; }
 
   .insight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
   .insight-card { background: var(--surface); padding: 1rem 1.25rem; }
@@ -232,13 +261,16 @@
   }
   @media (max-width: 600px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
-    th:nth-child(5), td:nth-child(5) { display: none; }
-    .filter-btns { display: none; }
-    th:nth-child(7), td:nth-child(7) { display: none; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 760px; }
+    .phase-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .phase-meta { margin-left: 0; }
     .add-task-panel.open { max-height: 520px; }
     .add-task-form { grid-template-columns: 1fr; }
     .personal-main { grid-template-columns: 1fr; padding: 1rem 1rem 2rem; }
-    .panel { border-radius: 8px; }
+    .insights-main { padding: 1rem 1rem 2rem; }
+    .main { padding: 1rem 1rem 2rem; }
+    .panel { border-radius: 12px; }
     .panel-body { padding: 12px; }
     .personal-add { flex-direction: column; }
     .personal-add input { width: 100%; }
@@ -254,19 +286,36 @@
     .mood-btn { width: 40px; height: 40px; font-size: 18px; }
     .insight-grid { grid-template-columns: 1fr; }
     .bar-row { grid-template-columns: 70px 1fr 70px; }
+    .calendar-toolbar { grid-template-columns: repeat(3, auto); justify-content: start; }
+    .calendar-month { font-size: 18px; }
+    .calendar-add { grid-template-columns: 1fr; }
+    .calendar-grid { grid-template-columns: 1fr; }
+    .calendar-weekdays { display: none; }
+    .cal-day { min-height: 110px; }
     .p-note { min-height: 100px; font-size: 13px; padding: 10px; }
     .habit-chip { padding: 10px 8px; font-size: 12px; }
     .meal-chip { padding: 10px 8px; font-size: 12px; }
-    header { padding: 2rem 1rem 1.5rem; }
-    header h1 { font-size: 26px; }
+    header { padding: 1.5rem 1rem 1.25rem; }
+    header h1 { font-size: 24px; line-height: 1.05; }
+    header p { font-size: 13px; line-height: 1.4; }
     .view-switch { padding: 0.5rem 1rem; flex-wrap: wrap; gap: 6px; }
-    .view-tab { padding: 6px 12px; font-size: 11px; }
-    .user-chip { font-size: 11px; padding: 5px 8px; }
-    .controls-bar { padding: 0.75rem 1rem; flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .ctrl-group { width: 100%; flex-direction: column; }
+    .view-tab { padding: 6px 12px; font-size: 11px; flex: 1 1 calc(50% - 6px); min-width: 0; }
+    .user-chip { font-size: 11px; padding: 5px 8px; flex: 1 1 100%; text-align: center; }
+    .controls-bar { padding: 0.75rem 1rem; flex-direction: column; align-items: stretch; gap: 0.85rem; }
+    .ctrl-group { width: 100%; flex-direction: column; align-items: stretch; }
     .ctrl-group label { width: 100%; }
+    .filter-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; }
+    .filter-btn { width: 100%; }
     .divider-v { display: none; }
     .btn-export { width: 100%; justify-content: center; }
+    .btn-ghost { width: 100%; }
+    .modal-backdrop { align-items: flex-start; padding: 0.5rem; overflow-y: auto; }
+    .modal { width: calc(100vw - 1rem) !important; max-width: calc(100vw - 1rem) !important; max-height: calc(100vh - 1rem); overflow-y: auto; border-radius: 16px; padding: 14px !important; box-sizing: border-box; }
+    .modal h3 { font-size: 22px; line-height: 1.1; }
+    .modal p { font-size: 13px; }
+    .modal input { height: 42px; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions button { width: 100%; }
   }
 
   .col-issue { width: 26%; }
@@ -369,6 +418,39 @@
 
 <div id="personalView" class="hidden">
   <div class="personal-main">
+    <!-- CALENDAR TASK BOARD -->
+    <div class="panel calendar-panel">
+      <div class="panel-head">
+        <div class="panel-title">Task Calendar Board</div>
+      </div>
+      <div class="panel-body">
+        <div class="calendar-toolbar">
+          <button class="btn-ghost" type="button" onclick="shiftCalendarMonth(-1)">Prev</button>
+          <button class="btn-ghost" type="button" onclick="shiftCalendarMonth(1)">Next</button>
+          <div id="calendarMonthLabel" class="calendar-month">Month</div>
+        </div>
+
+        <form id="calendarTaskForm" class="calendar-add">
+          <input id="calendarTaskInput" type="text" placeholder="Write a task card and place it on a date" maxlength="120" required>
+          <input id="calendarTaskDate" type="date" required>
+          <button class="btn-add" type="submit">Place Card</button>
+        </form>
+
+        <div class="calendar-weekdays">
+          <div class="calendar-weekday">Sun</div>
+          <div class="calendar-weekday">Mon</div>
+          <div class="calendar-weekday">Tue</div>
+          <div class="calendar-weekday">Wed</div>
+          <div class="calendar-weekday">Thu</div>
+          <div class="calendar-weekday">Fri</div>
+          <div class="calendar-weekday">Sat</div>
+        </div>
+
+        <div id="calendarGrid" class="calendar-grid"></div>
+        <div class="calendar-help">Tip: drag cards to move between days. Use the plus button on any day to quickly target that date.</div>
+      </div>
+    </div>
+
     <!-- MY TASKS -->
     <div class="panel">
       <div class="panel-head">
@@ -549,12 +631,32 @@
 <div class="toast" id="toast"></div>
 
 <div id="loginModal" class="modal-backdrop hidden">
-  <div class="modal">
-    <h3>Welcome</h3>
-    <p>Enter your name to localize your personal dashboard.</p>
-    <input id="loginName" type="text" placeholder="Your name" />
-    <div class="modal-actions">
-      <button class="btn-add" onclick="submitLogin()">Continue</button>
+  <div class="modal" style="width: min(92vw, 480px);">
+    <h3 id="authTitle">Sign Up or Login</h3>
+    <p id="authDesc">Join to sync your tracking across devices</p>
+    
+    <!-- Auth Tabs -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border);">
+      <button id="signupTab" class="view-tab active" style="border: none; border-bottom: 2px solid var(--action-bg); padding: 10px 0;" onclick="switchAuthTab('signup')">Sign Up</button>
+      <button id="loginTab" class="view-tab" style="border: none; border-bottom: 2px solid transparent; padding: 10px 0;" onclick="switchAuthTab('login')">Login</button>
+    </div>
+    
+    <!-- Auth Form -->
+    <form id="authForm" onsubmit="submitAuth(event)" style="display: flex; flex-direction: column; gap: 10px;">
+      <div>
+        <label style="font-size: 12px; color: var(--faint); display: block; margin-bottom: 5px;">Email</label>
+        <input id="authEmail" type="email" placeholder="you@example.com" required style="width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 6px; padding: 8px; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif;">
+      </div>
+      <div>
+        <label style="font-size: 12px; color: var(--faint); display: block; margin-bottom: 5px;">Password</label>
+        <input id="authPassword" type="password" placeholder="••••••••" required style="width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 6px; padding: 8px; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif;">
+      </div>
+      <div id="authError" style="color: var(--red); font-size: 12px; margin-bottom: 5px; display: none;"></div>
+      <button type="submit" class="btn-add" style="width: 100%; margin-top: 8px;">Continue</button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 12px; font-size: 11px; color: var(--muted);">
+      <p id="authHelpText">Create account to get started</p>
     </div>
   </div>
 </div>
@@ -621,6 +723,8 @@ let state = { issues: {}, startDate: '2026-04-14', customTasks: [], issueSetting
 let currentFilter = 'all';
 let saveTimer = null;
 let supabaseClient = null;
+let currentAuthTab = 'signup'; // 'signup' or 'login'
+let supabaseSession = null;
 let syncChannel = null;
 let isApplyingRemoteState = false;
 let remoteSyncTimer = null;
@@ -634,6 +738,8 @@ let liveSyncConfig = {
 };
 let personalState = {
   tasks: [],
+  calendarTasks: [],
+  calendarMonth: '',
   goals: [],
   focus: '',
   notes: '',
@@ -697,34 +803,177 @@ function personalStorageKey(){
 
 function updateUserChip(){
   const chip = document.getElementById('userChip');
-  if (chip) chip.textContent = 'User: ' + currentUser;
+  const displayName = supabaseSession?.user?.email || currentUser;
+  if (chip) chip.textContent = 'User: ' + displayName;
 }
 
-function ensureUser(){
-  const saved = localStorage.getItem(USER_KEY);
-  if (saved && saved.trim()) {
-    currentUser = saved.trim();
-    updateUserChip();
-    return;
+function switchAuthTab(tab){
+  currentAuthTab = tab;
+  document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+  document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+  
+  const form = document.getElementById('authForm');
+  const email = document.getElementById('authEmail');
+  const password = document.getElementById('authPassword');
+  const error = document.getElementById('authError');
+  const helpText = document.getElementById('authHelpText');
+  const title = document.getElementById('authTitle');
+  const desc = document.getElementById('authDesc');
+  
+  error.style.display = 'none';
+  error.textContent = '';
+  
+  if (tab === 'signup') {
+    title.textContent = 'Create Account';
+    desc.textContent = 'Join to sync your data across devices';
+    helpText.textContent = 'Create a new account to get started';
+    form.querySelector('button').textContent = 'Sign Up';
+  } else {
+    title.textContent = 'Welcome Back';
+    desc.textContent = 'Login to continue tracking';
+    helpText.textContent = 'Access your dashboard and personal tracker';
+    form.querySelector('button').textContent = 'Login';
   }
+}
+
+async function ensureUser(){
+  // Check if we have an active Supabase session
+  if (supabaseClient) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+      supabaseSession = session;
+      currentUser = session.user.email;
+      updateUserChip();
+      loadPersonalState();
+      renderPersonal();
+      return;
+    }
+  }
+  // No session, show login modal
   document.getElementById('loginModal').classList.remove('hidden');
 }
 
-function submitLogin(){
-  const inp = document.getElementById('loginName');
-  const name = String(inp.value || '').trim();
-  if (!name) return;
-  currentUser = name;
-  localStorage.setItem(USER_KEY, currentUser);
-  document.getElementById('loginModal').classList.add('hidden');
+async function submitAuth(e){
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  const errorDiv = document.getElementById('authError');
+  
+  if (!email || !password) {
+    errorDiv.textContent = 'Email and password required';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  
+  if (!supabaseClient) {
+    await ensureSupabaseClient();
+  }
+
+  if (!supabaseClient) {
+    errorDiv.textContent = 'Supabase not initialized. Please refresh.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  
+  try {
+    let result;
+    if (currentAuthTab === 'signup') {
+      result = await supabaseClient.auth.signUp({ email, password });
+    } else {
+      result = await supabaseClient.auth.signInWithPassword({ email, password });
+    }
+    
+    if (result.error) {
+      errorDiv.textContent = result.error.message;
+      errorDiv.style.display = 'block';
+      return;
+    }
+    
+    if (result.data && result.data.user) {
+      supabaseSession = result.data.session;
+      currentUser = result.data.user.email;
+      localStorage.setItem(USER_KEY, currentUser);
+      
+      // Close modal and reload dashboards
+      document.getElementById('loginModal').classList.add('hidden');
+      
+      // Reset professional dashboard
+      loadState();
+      render();
+      renderStats();
+      
+      // Load personal dashboard
+      loadPersonalState();
+      renderPersonal();
+      
+      updateUserChip();
+      showToast('Welcome ' + currentUser + '!');
+    }
+  } catch (err) {
+    errorDiv.textContent = 'Error: ' + (err.message || 'Unknown error');
+    errorDiv.style.display = 'block';
+  }
+}
+
+async function logoutUser(){
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
+  
+  // Clear session and local user data
+  supabaseSession = null;
+  currentUser = 'Guest';
+  localStorage.removeItem(USER_KEY);
+  
+  // Reset state properly by reloading defaults
+  state = { issues: {}, startDate: '2026-04-14', customTasks: [], issueSettings: {}, completionLog: [] };
+  personalState = {
+    tasks: [],
+    calendarTasks: [],
+    calendarMonth: '',
+    goals: [],
+    focus: '',
+    notes: '',
+    wins: '',
+    blockers: '',
+    mood: '😊',
+    energyLevel: 5,
+    waterCups: 0,
+    sleepHours: 0,
+    exerciseMin: 0,
+    habits: { water: false, workout: false, sleep: false, reading: false, meditation: false, journaling: false, stretching: false, vitamins: false, socialtime: false, learning: false },
+    meals: { breakfast: false, lunch: false, dinner: false, snacks: false }
+  };
+  
+  // Reload and render both dashboards
+  normalizeState(state);
   updateUserChip();
-  loadPersonalState();
+  render();
+  renderStats();
   renderPersonal();
+  
+  // Clear and show login form
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authForm').style.display = 'flex';
+  const errorDiv = document.getElementById('authError');
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+  }
+  switchAuthTab('login');
+  document.getElementById('loginModal').classList.remove('hidden');
 }
 
 function switchUser(){
-  document.getElementById('loginName').value = '';
-  document.getElementById('loginModal').classList.remove('hidden');
+  logoutUser().then(() => {
+    // Ensure modal is visible after logout completes
+    document.getElementById('loginModal').classList.remove('hidden');
+  }).catch(err => {
+    console.error('Logout error:', err);
+    // Show modal anyway
+    document.getElementById('loginModal').classList.remove('hidden');
+  });
 }
 
 function setInsightsWindow(days, btn){
@@ -739,6 +988,29 @@ function getLocalDateKey(dateObj = new Date()){
   const m = String(dateObj.getMonth() + 1).padStart(2, '0');
   const d = String(dateObj.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function escapeHtml(text){
+  return String(text || '').replace(/[&<>"']/g, (ch) => {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return map[ch] || ch;
+  });
+}
+
+function getCalendarMonthDate(){
+  const raw = personalState.calendarMonth;
+  if (/^\d{4}-\d{2}$/.test(raw)) {
+    const d = new Date(raw + '-01T00:00:00');
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+function setCalendarMonth(dateObj){
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  personalState.calendarMonth = `${y}-${m}`;
 }
 
 function getLastNDays(n){
@@ -810,6 +1082,8 @@ function getIssueWeight(issue){
 function loadPersonalState(){
   personalState = {
     tasks: [],
+    calendarTasks: [],
+    calendarMonth: '',
     goals: [],
     focus: '',
     notes: '',
@@ -845,6 +1119,8 @@ function loadPersonalState(){
     const parsed = JSON.parse(saved);
     if (!parsed || typeof parsed !== 'object') return;
     personalState.tasks = Array.isArray(parsed.tasks) ? parsed.tasks : [];
+    personalState.calendarTasks = Array.isArray(parsed.calendarTasks) ? parsed.calendarTasks : [];
+    personalState.calendarMonth = String(parsed.calendarMonth || '');
     personalState.goals = Array.isArray(parsed.goals) ? parsed.goals : [];
     personalState.focus = parsed.focus || '';
     personalState.notes = parsed.notes || '';
@@ -870,17 +1146,206 @@ function savePersonalState(){
   } catch (e) {}
 }
 
+function renderPersonalCalendar(){
+  const monthDate = getCalendarMonthDate();
+  setCalendarMonth(monthDate);
+
+  const monthLabel = document.getElementById('calendarMonthLabel');
+  if (monthLabel) {
+    monthLabel.textContent = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  const dateInput = document.getElementById('calendarTaskDate');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = getLocalDateKey();
+  }
+
+  const grid = document.getElementById('calendarGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startOffset = firstDay.getDay();
+  const firstVisible = new Date(year, month, 1 - startOffset);
+  const todayKey = getLocalDateKey();
+
+  for (let i = 0; i < 42; i++) {
+    const day = new Date(firstVisible);
+    day.setDate(firstVisible.getDate() + i);
+    const dateKey = getLocalDateKey(day);
+    const isCurrentMonth = day.getMonth() === month;
+    const dayTasks = personalState.calendarTasks
+      .filter(task => task.date === dateKey)
+      .sort((a, b) => Number(a.done) - Number(b.done));
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (isCurrentMonth ? '' : ' outside-month') + (dateKey === todayKey ? ' today' : '');
+    cell.innerHTML = `
+      <div class="cal-day-head">
+        <span class="cal-day-num">${day.getDate()}</span>
+        <button class="cal-add-day" type="button" data-quick-date="${dateKey}" title="Add card to this day">+</button>
+      </div>
+      <div class="cal-holder" data-drop-date="${dateKey}"></div>`;
+
+    const holder = cell.querySelector('.cal-holder');
+
+    if (!dayTasks.length) {
+      const empty = document.createElement('div');
+      empty.className = 'cal-empty';
+      empty.textContent = 'No cards';
+      holder.appendChild(empty);
+    } else {
+      dayTasks.forEach(task => {
+        const card = document.createElement('div');
+        card.className = 'cal-card' + (task.done ? ' done' : '');
+        card.draggable = true;
+        card.dataset.taskId = task.id;
+        card.innerHTML = `
+          <div class="cal-card-top">
+            <input type="checkbox" ${task.done ? 'checked' : ''} aria-label="Mark task done">
+            <div class="cal-card-text">${escapeHtml(task.text)}</div>
+            <div class="cal-card-actions">
+              <button class="cal-mini-btn" type="button" title="Delete card">x</button>
+            </div>
+          </div>`;
+
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', () => toggleCalendarTask(task.id));
+
+        const delBtn = card.querySelector('.cal-mini-btn');
+        delBtn.addEventListener('click', () => deleteCalendarTask(task.id));
+
+        card.addEventListener('dragstart', (e) => {
+          card.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', 'cal:' + task.id);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          document.querySelectorAll('.cal-holder.over').forEach(el => el.classList.remove('over'));
+        });
+
+        holder.appendChild(card);
+      });
+    }
+
+    holder.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      holder.classList.add('over');
+    });
+
+    holder.addEventListener('dragleave', () => {
+      holder.classList.remove('over');
+    });
+
+    holder.addEventListener('drop', (e) => {
+      e.preventDefault();
+      holder.classList.remove('over');
+      const payload = e.dataTransfer.getData('text/plain');
+      if (!payload) return;
+      if (payload.startsWith('cal:')) {
+        moveCalendarTask(payload.slice(4), dateKey);
+      } else if (payload.startsWith('personal:')) {
+        movePersonalTaskToCalendar(payload.slice(9), dateKey);
+      }
+    });
+
+    grid.appendChild(cell);
+  }
+
+  grid.querySelectorAll('[data-quick-date]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetDate = btn.dataset.quickDate;
+      const dateField = document.getElementById('calendarTaskDate');
+      const textField = document.getElementById('calendarTaskInput');
+      if (dateField) dateField.value = targetDate;
+      if (textField) textField.focus();
+    });
+  });
+}
+
+function shiftCalendarMonth(delta){
+  const d = getCalendarMonthDate();
+  d.setMonth(d.getMonth() + delta);
+  d.setDate(1);
+  setCalendarMonth(d);
+  savePersonalState();
+  renderPersonalCalendar();
+}
+
+function addCalendarTask(text, date){
+  const cleanText = String(text || '').trim();
+  if (!cleanText) return;
+  const cleanDate = /^\d{4}-\d{2}-\d{2}$/.test(String(date || '')) ? String(date) : getLocalDateKey();
+  personalState.calendarTasks.push({
+    id: 'ct-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    text: cleanText,
+    date: cleanDate,
+    done: false
+  });
+  savePersonalState();
+  renderPersonalCalendar();
+}
+
+function toggleCalendarTask(id){
+  const task = personalState.calendarTasks.find(t => t.id === id);
+  if (!task) return;
+  task.done = !task.done;
+  savePersonalState();
+  renderPersonalCalendar();
+}
+
+function deleteCalendarTask(id){
+  personalState.calendarTasks = personalState.calendarTasks.filter(t => t.id !== id);
+  savePersonalState();
+  renderPersonalCalendar();
+}
+
+function moveCalendarTask(id, date){
+  const task = personalState.calendarTasks.find(t => t.id === id);
+  if (!task || !/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) return;
+  task.date = date;
+  savePersonalState();
+  renderPersonalCalendar();
+}
+
+function addCalendarTaskFromForm(){
+  const input = document.getElementById('calendarTaskInput');
+  const date = document.getElementById('calendarTaskDate');
+  addCalendarTask(input.value, date.value);
+  input.value = '';
+  if (!date.value) date.value = getLocalDateKey();
+}
+
 function renderPersonal(){
+  renderPersonalCalendar();
+
   // Render tasks
   const list = document.getElementById('personalTaskList');
   list.innerHTML = '';
   personalState.tasks.forEach(task => {
     const li = document.createElement('li');
     li.className = 'personal-item' + (task.done ? ' done' : '');
+    li.draggable = true;
+    li.title = 'Drag into a calendar day';
     li.innerHTML = `
       <input type="checkbox" ${task.done ? 'checked' : ''} onchange="togglePersonalTask('${task.id}')">
       <div class="personal-text">${task.text}</div>
       <button class="btn-del" type="button" onclick="deletePersonalTask('${task.id}')">Delete</button>`;
+
+    li.addEventListener('dragstart', (e) => {
+      li.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', 'personal:' + task.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    li.addEventListener('dragend', () => {
+      li.classList.remove('dragging');
+    });
+
     list.appendChild(li);
   });
   const done = personalState.tasks.filter(t => t.done).length;
@@ -1017,6 +1482,36 @@ function addPersonalTask(text){
   renderPersonal();
 }
 
+function togglePersonalTask(id){
+  const task = personalState.tasks.find(t => t.id === id);
+  if (!task) return;
+  task.done = !task.done;
+  savePersonalState();
+  renderPersonal();
+}
+
+function deletePersonalTask(id){
+  personalState.tasks = personalState.tasks.filter(t => t.id !== id);
+  savePersonalState();
+  renderPersonal();
+}
+
+function movePersonalTaskToCalendar(id, date){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) return;
+  const idx = personalState.tasks.findIndex(t => t.id === id);
+  if (idx < 0) return;
+  const task = personalState.tasks[idx];
+  personalState.tasks.splice(idx, 1);
+  personalState.calendarTasks.push({
+    id: 'ct-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    text: task.text,
+    date,
+    done: !!task.done
+  });
+  savePersonalState();
+  renderPersonal();
+}
+
 function getTotalIssues(){
   return PHASES.reduce((sum, phase) => sum + phase.issues.length, 0);
 }
@@ -1069,6 +1564,23 @@ async function fetchLiveSyncConfig(){
     return true;
   } catch (e) {
     return false;
+  }
+}
+
+async function ensureSupabaseClient(){
+  if (supabaseClient) return supabaseClient;
+  if (!liveSyncConfig.projectUrl || !liveSyncConfig.anonKey || !liveSyncConfig.workspaceId) {
+    const hasConfig = await fetchLiveSyncConfig();
+    if (!hasConfig) return null;
+  }
+  if (!window.supabase || !window.supabase.createClient) return null;
+
+  try {
+    supabaseClient = window.supabase.createClient(liveSyncConfig.projectUrl, liveSyncConfig.anonKey);
+    return supabaseClient;
+  } catch (e) {
+    console.error('Failed to initialize Supabase client:', e);
+    return null;
   }
 }
 
@@ -1148,28 +1660,14 @@ function startAutoPullLoop(){
 }
 
 async function setupLiveSync(){
-  if (!liveSyncConfig.projectUrl || !liveSyncConfig.anonKey || !liveSyncConfig.workspaceId) {
-    const hasConfig = await fetchLiveSyncConfig();
-    if (!hasConfig) {
-      setLiveSyncStatus('Live sync: Missing .env config', false);
-      showToast('Missing backend sync config');
-      return;
-    }
-  }
-
-  if (!liveSyncConfig.projectUrl || !liveSyncConfig.anonKey || !liveSyncConfig.workspaceId) {
+  const client = await ensureSupabaseClient();
+  if (!client) {
     setLiveSyncStatus('Live sync: Missing .env config', false);
     showToast('Missing backend sync config');
     return;
   }
 
-  if (!window.supabase || !window.supabase.createClient) {
-    showToast('Supabase SDK failed to load');
-    return;
-  }
-
   try {
-    supabaseClient = window.supabase.createClient(liveSyncConfig.projectUrl, liveSyncConfig.anonKey);
     setLiveSyncStatus('Live sync: Connecting...', false);
     await subscribeToCloudChanges();
     await pullFromCloud({ showMessage: false, silent: true });
@@ -1329,6 +1827,10 @@ function updateStats(){
   const pct = totalWeight ? Math.round(doneWeight / totalWeight * 100) : 0;
   document.getElementById('s-pct').textContent = pct + '%';
   document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderStats(){
+  updateStats();
 }
 
 function cycleStatus(id){
@@ -1606,6 +2108,17 @@ function renderInsights(){
 }
 
 function render(){
+  const activeEl = document.activeElement;
+  let focusSnapshot = null;
+  if (activeEl && activeEl.matches && activeEl.matches('input[data-id][data-field], textarea[data-id][data-field]')) {
+    focusSnapshot = {
+      id: activeEl.dataset.id,
+      field: activeEl.dataset.field,
+      start: typeof activeEl.selectionStart === 'number' ? activeEl.selectionStart : null,
+      end: typeof activeEl.selectionEnd === 'number' ? activeEl.selectionEnd : null
+    };
+  }
+
   const start = getStart();
   const main = document.getElementById('main');
   main.innerHTML = '';
@@ -1677,6 +2190,20 @@ function render(){
   applyFilter();
   updateStats();
   renderInsights();
+
+  if (focusSnapshot && focusSnapshot.id && focusSnapshot.field) {
+    const selector = `[data-id="${focusSnapshot.id}"][data-field="${focusSnapshot.field}"]`;
+    const nextEl = main.querySelector(selector);
+    if (nextEl) {
+      nextEl.focus();
+      if (typeof nextEl.setSelectionRange === 'function' && focusSnapshot.start !== null) {
+        const max = String(nextEl.value || '').length;
+        const startPos = Math.min(focusSnapshot.start, max);
+        const endPos = Math.min(focusSnapshot.end === null ? startPos : focusSnapshot.end, max);
+        nextEl.setSelectionRange(startPos, endPos);
+      }
+    }
+  }
 }
 
 function exportCSV(){
@@ -1781,6 +2308,11 @@ document.getElementById('personalAddForm').addEventListener('submit', (e) => {
   input.value = '';
 });
 
+document.getElementById('calendarTaskForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  addCalendarTaskFromForm();
+});
+
 document.getElementById('personalNotes').addEventListener('input', (e) => {
   personalState.notes = e.target.value;
   savePersonalState();
@@ -1826,34 +2358,73 @@ document.getElementById('exerciseMin').addEventListener('change', (e) => {
   savePersonalState();
 });
 
-document.getElementById('loginName').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    submitLogin();
-  }
-});
+// Auth form is handled via onsubmit in HTML
 
 window.addEventListener('beforeunload', () => {
   saveState(false);
 });
 
-loadState();
-applyTheme(localStorage.getItem(THEME_KEY) || 'light');
-ensureUser();
-loadPersonalState();
-initAddTaskForm();
-document.getElementById('startDate').value = state.startDate || '2026-04-14';
-render();
-renderPersonal();
-updateUserChip();
-
-setLiveSyncStatus('Live sync: Checking config...', false);
-fetchLiveSyncConfig().then((ok) => {
-  if (ok) {
-    setupLiveSync();
-  } else {
-    setLiveSyncStatus('Live sync: Missing .env config', false);
+async function initializeApp(){
+  loadState();
+  applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+  
+  // Load any previously saved user
+  const savedUser = localStorage.getItem(USER_KEY);
+  if (savedUser) {
+    currentUser = savedUser;
   }
+  
+  // Initialize Supabase and check auth
+  setLiveSyncStatus('Live sync: Initializing...', false);
+  const configOk = await fetchLiveSyncConfig();
+  if (configOk) {
+    const client = await ensureSupabaseClient();
+    if (client) {
+      // Check for existing Supabase session
+      const { data: { session } } = await client.auth.getSession();
+      if (session && session.user) {
+        supabaseSession = session;
+        currentUser = session.user.email;
+        localStorage.setItem(USER_KEY, currentUser);
+      }
+    }
+  }
+  
+  updateUserChip();
+  loadPersonalState();
+  initAddTaskForm();
+  document.getElementById('startDate').value = state.startDate || '2026-04-14';
+  renderStats();
+  renderPersonal();
+  
+  // Setup live sync
+  if (configOk) {
+    setupLiveSync();
+  }
+  
+  // If no Supabase session, show login modal
+  // (Allow offline mode with localStorage-only data)
+  if (!supabaseSession && configOk) {
+    // Show login suggestion but allow offline mode
+    switchAuthTab('login');
+    // Optionally show the modal - comment out if you want offline mode
+    // document.getElementById('loginModal').classList.remove('hidden');
+  }
+}
+
+// Start the app
+initializeApp().catch(err => {
+  console.error('Failed to initialize app:', err);
+  // Still allow offline mode even if init fails
+  loadState();
+  applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+  const savedUser = localStorage.getItem(USER_KEY);
+  if (savedUser) currentUser = savedUser;
+  updateUserChip();
+  loadPersonalState();
+  render();
+  renderStats();
+  renderPersonal();
 });
 </script>
 </body>
