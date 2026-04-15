@@ -2470,29 +2470,13 @@ window.addEventListener('beforeunload', () => {
 });
 
 async function initializeApp(){
+  // Load and render immediately (blocking page load during logo rendering)
   loadState();
   applyTheme(localStorage.getItem(THEME_KEY) || 'light');
   
-  // Load any previously saved user
   const savedUser = localStorage.getItem(USER_KEY);
   if (savedUser) {
     currentUser = savedUser;
-  }
-  
-  // Initialize Supabase and check auth
-  setLiveSyncStatus('Live sync: Initializing...', false);
-  const configOk = await fetchLiveSyncConfig();
-  if (configOk) {
-    const client = await ensureSupabaseClient();
-    if (client) {
-      // Check for existing Supabase session
-      const { data: { session } } = await client.auth.getSession();
-      if (session && session.user) {
-        supabaseSession = session;
-        currentUser = session.user.email;
-        localStorage.setItem(USER_KEY, currentUser);
-      }
-    }
   }
   
   updateUserChip();
@@ -2502,32 +2486,42 @@ async function initializeApp(){
   renderStats();
   renderPersonal();
   
-  // Setup live sync
-  if (configOk && supabaseSession && supabaseSession.user) {
-    setupLiveSync();
-  } else if (configOk) {
-    setLiveSyncStatus('Live sync: Login required', false);
-  }
-
-  if (supabaseSession && supabaseSession.user) {
-    document.getElementById('loginModal').classList.add('hidden');
-  } else {
-    switchAuthTab('login');
-    document.getElementById('loginModal').classList.remove('hidden');
+  // Show login modal immediately
+  switchAuthTab('login');
+  document.getElementById('loginModal').classList.remove('hidden');
+  setLiveSyncStatus('Live sync: Initializing...', false);
+  
+  // Initialize Supabase in background (non-blocking)
+  try {
+    const configOk = await fetchLiveSyncConfig();
+    if (configOk) {
+      const client = await ensureSupabaseClient();
+      if (client) {
+        const { data: { session } } = await client.auth.getSession();
+        if (session && session.user) {
+          supabaseSession = session;
+          currentUser = session.user.email;
+          localStorage.setItem(USER_KEY, currentUser);
+          updateUserChip();
+          document.getElementById('loginModal').classList.add('hidden');
+          await setupLiveSync();
+        } else {
+          setLiveSyncStatus('Live sync: Login required', false);
+        }
+      }
+    } else {
+      setLiveSyncStatus('Live sync: Config unavailable', false);
+    }
+  } catch (err) {
+    console.error('Supabase init error:', err);
+    setLiveSyncStatus('Live sync: Error', false);
   }
 }
 
-// Start the app
+// Start the app (renders immediately, Supabase connects in background)
 initializeApp().catch(err => {
   console.error('Failed to initialize app:', err);
-  // Still allow offline mode even if init fails
-  loadState();
-  applyTheme(localStorage.getItem(THEME_KEY) || 'light');
-  const savedUser = localStorage.getItem(USER_KEY);
-  if (savedUser) currentUser = savedUser;
-  updateUserChip();
-  loadPersonalState();
-  initAddTaskForm();
+  setLiveSyncStatus('Live sync: Error', false);
   document.getElementById('startDate').value = state.startDate || '2026-04-14';
   switchAuthTab('login');
   document.getElementById('loginModal').classList.remove('hidden');
