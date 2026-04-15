@@ -2,10 +2,15 @@
   "buildCommand": "npm install",
   "cleanUrls": true,
   "trailingSlash": false,
+  "public": true,
   "routes": [
     {
       "src": "/assets/(.*)",
-      "dest": "/assets/$1"
+      "dest": "/$0"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/$0"
     },
     {
       "src": "/(.*)",
