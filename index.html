@@ -77,6 +77,7 @@
   .btn-export { margin-left: auto; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 18px; border: 1px solid var(--action-bg); border-radius: 6px; background: var(--action-bg); color: var(--action-fg); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
   .btn-export:hover { background: #333; }
   .btn-export svg { width: 14px; height: 14px; }
+  .task-actions { display: flex; gap: 8px; align-items: center; }
   .btn-ghost { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .btn-ghost:hover { border-color: var(--text); color: var(--text); }
   .sync-status { font-size: 12px; color: var(--faint); white-space: nowrap; }
@@ -321,6 +322,7 @@
     .divider-v { display: none; }
     .btn-export { width: 100%; justify-content: center; }
     .btn-ghost { width: 100%; }
+    .task-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .modal-backdrop { align-items: flex-start; padding: 0.5rem; overflow-y: auto; }
     .modal { width: calc(100vw - 1rem) !important; max-width: calc(100vw - 1rem) !important; max-height: calc(100vh - 1rem); overflow-y: auto; border-radius: 16px; padding: 14px !important; box-sizing: border-box; }
     .modal h3 { font-size: 22px; line-height: 1.1; }
@@ -382,9 +384,10 @@
   </button>
   <button class="btn-ghost" onclick="exportSyncFile()">Export Sync File</button>
   <button class="btn-ghost" onclick="triggerImportSync()">Import Sync File</button>
-  <button class="btn-ghost" onclick="toggleAddPhasePanel()">Add Phase</button>
-  <button class="btn-ghost" onclick="toggleAddTaskPanel()">Add Task</button>
-  <button class="btn-ghost" onclick="setupLiveSync()">Connect Live Sync</button>
+  <div class="task-actions">
+    <button class="btn-ghost" onclick="toggleAddTaskPanel()">Add Task</button>
+    <button class="btn-ghost" onclick="toggleAddPhasePanel()">Add Phase</button>
+  </div>
   <span class="sync-status" id="liveSyncStatus">Live sync: Off</span>
   <input id="syncFileInput" type="file" accept="application/json" style="display:none">
 </div>
