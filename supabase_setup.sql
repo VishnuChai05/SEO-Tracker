@@ -1,8 +1,16 @@
-create table if not exists public.tracker_state (
-  id text primary key,
+-- WARNING: this resets previous shared tracker_state data.
+drop table if exists public.tracker_state;
+
+create table public.tracker_state (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  workspace_id text not null default 'default',
   data jsonb not null,
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  primary key (user_id, workspace_id)
 );
+
+create index if not exists tracker_state_workspace_idx
+on public.tracker_state (workspace_id);
 
 alter table public.tracker_state replica identity full;
 
@@ -20,14 +28,12 @@ $$;
 alter table public.tracker_state enable row level security;
 
 drop policy if exists "Allow anon read tracker_state" on public.tracker_state;
-create policy "Allow anon read tracker_state"
-on public.tracker_state
-for select
-using (true);
-
 drop policy if exists "Allow anon upsert tracker_state" on public.tracker_state;
-create policy "Allow anon upsert tracker_state"
+drop policy if exists "Users manage own tracker_state" on public.tracker_state;
+
+create policy "Users manage own tracker_state"
 on public.tracker_state
 for all
-using (true)
-with check (true);
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
